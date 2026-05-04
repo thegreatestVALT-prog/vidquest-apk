@@ -1,0 +1,35 @@
+{
+  "appId": "com.vidquest.app",
+  "appName": "VidQuest",
+  "webDir": "www",
+  "server": {
+    "url": "https://thegreatestvalt-prog.github.io/vidquest",
+    "cleartext": false,
+    "allowNavigation": [
+      "thegreatestvalt-prog.github.io",
+      "nbqyvxrulcjajppozokx.supabase.co",
+      "soleaspay.com",
+      "tiktok.com",
+      "www.tiktok.com",
+      "facebook.com",
+      "www.facebook.com",
+      "youtube.com",
+      "www.youtube.com",
+      "instagram.com"
+    ]
+  },
+  "android": {
+    "backgroundColor": "#060d1f",
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#060d1f",
+      "androidSplashResourceName": "splash",
+      "showSpinner": false
+    }
+  }
+}
