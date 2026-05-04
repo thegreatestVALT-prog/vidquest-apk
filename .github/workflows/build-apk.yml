@@ -1,1 +1,119 @@
+name: Build VidQuest APK
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Capacitor
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Create www folder
+        run: |
+          mkdir -p www
+          cat > www/index.html << 'EOF'
+          <!DOCTYPE html><html><head><meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>VidQuest</title>
+          <style>body{margin:0;background:#060d1f;display:flex;align-items:center;justify-content:center;min-height:100vh;color:#fff;font-family:sans-serif}</style>
+          </head><body><p>Chargement...</p></body></html>
+          EOF
+
+      - name: Create capacitor config
+        run: |
+          cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "com.vidquest.app",
+            "appName": "VidQuest",
+            "webDir": "www",
+            "server": {
+              "url": "https://thegreatestvalt-prog.github.io/vidquest",
+              "cleartext": false,
+              "allowNavigation": [
+                "thegreatestvalt-prog.github.io",
+                "nbqyvxrulcjajppozokx.supabase.co",
+                "soleaspay.com",
+                "tiktok.com",
+                "facebook.com",
+                "youtube.com",
+                "instagram.com"
+              ]
+            },
+            "android": {
+              "backgroundColor": "#060d1f"
+            }
+          }
+          EOF
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon --stacktrace
+        env:
+          GRADLE_OPTS: "-Xmx4g -XX:MaxMetaspaceSize=512m"
+
+      - name: Find and rename APK
+        run: |
+          mkdir -p release
+          find android -name "*.apk" | head -1 | xargs -I {} cp {} release/VidQuest.apk
+          echo "APK size: $(du -sh release/VidQuest.apk)"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VidQuest-APK
+          path: release/VidQuest.apk
+          retention-days: 90
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: "VidQuest v1.0.${{ github.run_number }}"
+          body: |
+            ## 📱 VidQuest — Application Android
+
+            ### Télécharger et installer
+            1. Téléchargez **VidQuest.apk** ci-dessous
+            2. Sur votre téléphone : **Paramètres → Sécurité → Sources inconnues → Activer**
+            3. Ouvrez le fichier APK et installez
+            4. Lancez VidQuest !
+
+            > Nécessite Android 6.0 minimum · Connexion internet requise
+          files: release/VidQuest.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
